@@ -9,5 +9,5 @@ import (
 )
 
 var possibleCPU = sync.OnceValues(func() (int, error) {
-	return linux.ParseCPUsFromFile("/sys/devices/system/cpu/possible")
+	return linux.FindPossibleCPUs()
 })

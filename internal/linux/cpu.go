@@ -3,10 +3,37 @@ package linux
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strconv"
 	"strings"
 )
 
-func ParseCPUsFromFile(path string) (int, error) {
+const (
+	possibleCPUsFile = "/sys/devices/system/cpu/possible"
+)
+
+// FindPossibleCPUs returns the number of possible cpus on this system.
+// if the file at `possibleCPUsFile` does not exist, it uses the `nproc` command instead.
+func FindPossibleCPUs() (int, error) {
+	if _, err := os.Stat(possibleCPUsFile); err == nil {
+		return parseCPUsFromFile(possibleCPUsFile)
+	}
+
+	return getCPUsNproc()
+}
+
+// getCPUsNproc retrieves the possible cpus using the `nproc` command
+func getCPUsNproc() (int, error) {
+	output, err := exec.Command("nproc", "--all").Output()
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.Atoi(strings.Trim(string(output), "\n"))
+}
+
+// parseCPUsFromFile parses a cpu bitmap obtained from a file at `path`
+func parseCPUsFromFile(path string) (int, error) {
 	spec, err := os.ReadFile(path)
 	if err != nil {
 		return 0, err
